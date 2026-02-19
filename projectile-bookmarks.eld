@@ -1,0 +1,1 @@
+("~/.config/emacs/" "~/Notes/" "~/clojures/" "~/minimal-emacs.d/" "~/kickstart.emacs/")
