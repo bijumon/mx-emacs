@@ -61,14 +61,7 @@
 
 (when (and (bound-and-true-p minimal-emacs-package-initialize-and-refresh)
            (not (bound-and-true-p byte-compile-current-file)))
-  ;; Initialize and refresh package contents again if needed
-  (package-initialize)
-  (unless package-archive-contents
-    (package-refresh-contents))
-  (when (and (version< emacs-version "29.1")
-             (not (package-installed-p 'use-package)))
-    (package-install 'use-package))
-  (require 'use-package))
+  (mx-packages-initialize))
 
 ;;; Misc
 
