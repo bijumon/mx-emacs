@@ -515,8 +515,7 @@ this stage of initialization."
  use-package-minimum-reported-time (if init-file-debug 0 0.1)
  use-package-verbose init-file-debug
  use-package-always-ensure (not noninteractive)
- use-package-enable-imenu-support t
- )
+ use-package-enable-imenu-support t)
 
 ;; Load package configuration before any package initialization.
 (load (expand-file-name "packages.el" user-emacs-directory) nil 'nomessage)
