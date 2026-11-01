@@ -516,24 +516,10 @@ this stage of initialization."
  use-package-verbose init-file-debug
  use-package-always-ensure (not noninteractive)
  use-package-enable-imenu-support t
+ )
 
- ;;; package.el
-
- ;; Placing the use-package-* in early-init.el ensures the package variables are
- ;; populated before package.el is initialized. This prevents cases where Emacs
- ;; might attempt to fetch from default repositories before it evaluates the
- ;; overridden variables in init.el. (This also offers the possibility to
- ;; download packages in post-early-init.el, for users who need it.)
- package-enable-at-startup nil  ; Let the init.el file handle this
- package-quickstart-file (expand-file-name "package-quickstart.el" user-emacs-directory)
- package-archives '(("melpa"        . "https://melpa.org/packages/")
-                    ("gnu"          . "https://elpa.gnu.org/packages/")
-                    ("nongnu"       . "https://elpa.nongnu.org/nongnu/")
-                    ("melpa-stable" . "https://stable.melpa.org/packages/"))
- package-archive-priorities '(("gnu"    . 99)
-                              ("nongnu" . 80)
-                              ("melpa"  . 70)
-                              ("melpa-stable" . 50)))
+;; Load package configuration before any package initialization.
+(load (expand-file-name "packages.el" user-emacs-directory) nil 'nomessage)
 
 ;;; Load post-early-init.el
 
