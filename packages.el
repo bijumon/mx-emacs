@@ -12,8 +12,8 @@
 (require 'seq)
 
 (defconst mx-packages-selected
-  '(use-package vertico marginalia orderless consult embark
-    embark-consult wgrep)
+  '(use-package projectile vertico marginalia orderless consult
+    embark-consult embark wgrep)
   "Packages used by this Emacs configuration.")
 
 (setq package-selected-packages mx-packages-selected)
