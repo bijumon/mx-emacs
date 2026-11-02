@@ -62,7 +62,8 @@
 (when (and (bound-and-true-p minimal-emacs-package-initialize-and-refresh)
            (not (bound-and-true-p byte-compile-current-file)))
   ;; Startup only initializes packages already present on disk.
-  (mx-packages-initialize))
+  (when (fboundp 'mx-packages-initialize)
+    (mx-packages-initialize)))
 
 ;;; Misc
 
