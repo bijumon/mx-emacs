@@ -61,6 +61,8 @@
 
 (when (and (bound-and-true-p minimal-emacs-package-initialize-and-refresh)
            (not (bound-and-true-p byte-compile-current-file)))
+  ;; Startup only reads the local package database; it must never access
+  ;; package archives or mutate the installed package set.
   (mx-packages-initialize))
 
 ;;; Misc
