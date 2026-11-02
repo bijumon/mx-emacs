@@ -164,7 +164,7 @@ In batch mode, remove packages only when ASSUME-YES is non-nil."
   (message "Emacs package manager")
   (message "------------------------")
   (let* ((removable (package--removable-packages))
-         (names (mapcar #'package-desc-name removable)))
+         (names (mapcar #'package-desc-full-name removable)))
     (if (null removable)
         (message "[OK] No unselected packages to remove.")
       (message "The following unselected packages are eligible for removal:")
@@ -187,7 +187,7 @@ In batch mode, remove packages only when ASSUME-YES is non-nil."
             (progn
               (mx-packages--run-step
                "Removing unselected packages"
-               #'package-autoremove)
+               (lambda () (package-autoremove t)))
               (message "[OK] Package cleanup completed."))
           (message "[CANCELLED] Package cleanup skipped."))))))
 
