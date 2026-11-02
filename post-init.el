@@ -7,63 +7,81 @@
 ;; and "just works", though it is also highly customisable.
 ;;
 ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:cff33514-d3ac-4c16-a889-ea39d7346dc5
+;; Skip package declarations whose libraries are not installed locally.
+(when (and (locate-library "use-package")
+           (require 'use-package nil t))
+  (when (locate-library "vertico")
+  ;; Package declarations are conditional so a partial installation is usable.
+(when (and (locate-library "use-package")
+           (require 'use-package nil t))
+(when (locate-library "vertico")
 (use-package vertico
-    :config
-  (setq vertico-cycle t)
-  (setq vertico-resize nil)
-  (vertico-mode 1))
+      :config
+    (setq vertico-cycle t)
+    (setq vertico-resize nil)
+    (vertico-mode 1))))
 
-;; The `marginalia' package provides helpful annotations next to
-;; completion candidates in the minibuffer.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:bd3f7a1d-a53d-4d3e-860e-25c5b35d8e7e
+  ;; The `marginalia' package provides helpful annotations next to
+  ;; completion candidates in the minibuffer.
+  ;;
+  ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:bd3f7a1d-a53d-4d3e-860e-25c5b35d8e7e
+  (when (locate-library "marginalia")
 (use-package marginalia
-    :config
-  (marginalia-mode 1))
+      :config
+    (marginalia-mode 1)))
 
-;; The `orderless' package enables out-of-order pattern matching.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:7cc77fd0-8f98-4fc0-80be-48a758fcb6e2
+  ;; The `orderless' package enables out-of-order pattern matching.
+  ;;
+  ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:7cc77fd0-8f98-4fc0-80be-48a758fcb6e2
+  (when (locate-library "orderless")
 (use-package orderless
-    :config
-  (setq completion-styles '(orderless basic)))
+      :config
+    (setq completion-styles '(orderless basic))))
 
-;; The `consult' package provides enhanced versions of built-in commands.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:22e97b4c-d88d-4deb-9ab3-f80631f9ff1d
+  ;; The `consult' package provides enhanced versions of built-in commands.
+  ;;
+  ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:22e97b4c-d88d-4deb-9ab3-f80631f9ff1d
+  (when (locate-library "consult")
 (use-package consult
-    :bind (;; A recursive grep
-         ("M-s M-g" . consult-grep)
-         ;; Search for files names recursively
-         ("M-s M-f" . consult-find)
-         ;; Search through the outline
-         ("M-s M-o" . consult-outline)
-         ;; Search the current buffer
-         ("M-s M-l" . consult-line)
-         ;; Switch buffers, bookmarks, and recent files
-         ("M-s M-b" . consult-buffer)))
+      :bind (;; A recursive grep
+           ("M-s M-g" . consult-grep)
+           ;; Search for files names recursively
+           ("M-s M-f" . consult-find)
+           ;; Search through the outline
+           ("M-s M-o" . consult-outline)
+           ;; Search the current buffer
+           ("M-s M-l" . consult-line)
+           ;; Switch buffers, bookmarks, and recent files
+           ("M-s M-b" . consult-buffer))))
 
-;; The `embark' package provides context-sensitive actions.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:61863da4-8739-42ae-a30f-6e9d686e1995
+  ;; The `embark' package provides context-sensitive actions.
+  ;;
+  ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:61863da4-8739-42ae-a30f-6e9d686e1995
+  (when (locate-library "embark")
 (use-package embark
-    :bind (("C-." . embark-act)
-         :map minibuffer-local-map
-         ("C-c C-c" . embark-collect)
-         ("C-c C-e" . embark-export)))
+      :bind (("C-." . embark-act)
+           :map minibuffer-local-map
+           ("C-c C-c" . embark-collect)
+           ("C-c C-e" . embark-export))))
 
-;; Glue code between Embark and Consult.
+  ;; Glue code between Embark and Consult.
+  (when (locate-library "embark-consult")
 (use-package embark-consult
-  )
+    ))
 
-;; Edit grep results in a grep-mode buffer.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:9a3581df-ab18-4266-815e-2edd7f7e4852
+  ;; Edit grep results in a grep-mode buffer.
+  ;;
+  ;; Further reading: https://protesilaos.com/emacs/dotemacs#h:9a3581df-ab18-4266-815e-2edd7f7e4852
+  (when (locate-library "wgrep")
 (use-package wgrep
-    :bind (:map grep-mode-map
-              ("e" . wgrep-change-to-wgrep-mode)
-              ("C-x C-q" . wgrep-change-to-wgrep-mode)
-              ("C-c C-c" . wgrep-finish-edit)))
+      :bind (:map grep-mode-map
+                ("e" . wgrep-change-to-wgrep-mode)
+                ("C-x C-q" . wgrep-change-to-wgrep-mode)
+                ("C-c C-c" . wgrep-finish-edit))))
+
+)
+
+)
 
 ;; Save minibuffer histories for completion frameworks.
 (savehist-mode 1)

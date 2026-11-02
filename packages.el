@@ -32,16 +32,29 @@
 
 (setq package-selected-packages mx-packages-selected)
 
+(defun mx-packages-missing ()
+  "Return required packages whose libraries are not available locally."
+  (seq-filter
+   (lambda (package)
+     (not (locate-library (symbol-name package))))
+   mx-packages-selected))
+
 (defun mx-packages-initialize ()
-  "Initialize the local package database without network access."
+  "Initialize local packages without network access or package changes.
+Return the list of missing packages."
   (interactive)
   (package-initialize)
-  ;; Emacs 29 bundles use-package. Do not install it during startup.
-  (unless (require 'use-package nil t)
-    (display-warning 'mx-emacs
-                     "use-package is unavailable; run M-x mx-packages-init"
-                     :warning))
-  t)
+  (let ((missing (mx-packages-missing)))
+    (if missing
+        (display-warning
+         'mx-emacs
+         (format "Some configured packages are unavailable: %s. Their configuration will be skipped. Run ./mx-emacs.sh init to install them."
+                 (mapconcat #'symbol-name missing ", "))
+         :warning)
+      (message "mx-emacs: all configured packages are available"))
+    (when (locate-library "use-package")
+      (require 'use-package nil t))
+    missing))
 
 (defun mx-packages-init ()
   "Refresh archives and install packages required by this configuration."
