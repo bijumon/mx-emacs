@@ -516,8 +516,9 @@ this stage of initialization."
  use-package-always-ensure (not noninteractive)
  use-package-enable-imenu-support t)
 
-;; Load package configuration before any package initialization.
-(load (expand-file-name "packages.el" user-emacs-directory) nil 'nomessage)
+;; Load package helpers when present. A missing packages.el must not
+;; prevent vanilla Emacs startup.
+(load (expand-file-name "packages.el" user-emacs-directory) t 'nomessage)
 
 ;;; Load post-early-init.el
 
