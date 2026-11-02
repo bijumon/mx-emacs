@@ -87,9 +87,8 @@ This reduces visual clutter and slightly enhances startup performance. The
 tradeoff is that the mode line is hidden during the startup phase.")
 
 (defvar minimal-emacs-package-initialize-and-refresh t
-  "Whether to automatically initialize and refresh packages.
-When set to non-nil, Emacs will automatically call `package-initialize' and
-`package-refresh-contents' to set up and update the package system.")
+  "Whether to initialize already-installed packages during startup.
+This does not contact package archives or install, upgrade, or remove packages.")
 
 (defvar minimal-emacs-inhibit-redisplay-during-startup nil
   "Suppress redisplay during startup to improve performance.
@@ -514,7 +513,7 @@ this stage of initialization."
  use-package-expand-minimally t
  use-package-minimum-reported-time (if init-file-debug 0 0.1)
  use-package-verbose init-file-debug
- use-package-always-ensure (not noninteractive)
+ use-package-always-ensure nil
  use-package-enable-imenu-support t
 
  ;;; package.el
@@ -534,6 +533,9 @@ this stage of initialization."
                               ("nongnu" . 80)
                               ("melpa"  . 70)
                               ("melpa-stable" . 50)))
+
+;; Package commands are available during normal interactive sessions.
+(load (expand-file-name "packages.el" user-emacs-directory) nil 'nomessage)
 
 ;;; Load post-early-init.el
 
