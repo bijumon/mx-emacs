@@ -154,17 +154,42 @@ Signal an error after reporting all failures so batch callers exit non-zero."
    #'package-upgrade-all)
   (message "[OK] Package synchronization completed."))
 
-(defun mx-packages-clean ()
-  "Remove installed packages not required by this configuration."
+(defun mx-packages-clean (&optional assume-yes)
+  "Preview and remove packages not required by this configuration.
+In batch mode, remove packages only when ASSUME-YES is non-nil."
   (interactive)
   (setq package-selected-packages mx-packages-selected)
+  (package-initialize)
   (message "")
   (message "Emacs package manager")
   (message "------------------------")
-  (mx-packages--run-step
-   "Removing unselected packages"
-   #'package-autoremove)
-  (message "[OK] Package cleanup completed."))
+  (let* ((removable (package--removable-packages))
+         (names (mapcar #'package-desc-name removable)))
+    (if (null removable)
+        (message "[OK] No unselected packages to remove.")
+      (message "The following unselected packages are eligible for removal:")
+      (dolist (package names)
+        (message "  - %s" package))
+      (let ((confirmed
+             (cond
+              (assume-yes t)
+              (noninteractive
+               (message "[ABORT] Batch cleanup requires the explicit --yes option.")
+               nil)
+              (t
+               (string-equal
+                (downcase (string-trim
+                           (read-string
+                            (format "Remove %d package(s)? [y/N] "
+                                    (length removable)))))
+                "y")))))
+        (if confirmed
+            (progn
+              (mx-packages--run-step
+               "Removing unselected packages"
+               #'package-autoremove)
+              (message "[OK] Package cleanup completed."))
+          (message "[CANCELLED] Package cleanup skipped."))))))
 
 (provide 'packages)
 
