@@ -9,6 +9,7 @@
 
 (require 'package)
 (require 'subr-x)
+(require 'seq)
 
 (defconst mx-packages-selected
   '(use-package vertico marginalia orderless consult embark
@@ -17,12 +18,29 @@
 
 (setq package-selected-packages mx-packages-selected)
 
+(defun mx-packages-missing ()
+  "Return configured packages whose libraries are not available locally."
+  (seq-filter
+   (lambda (package)
+     (not (locate-library (symbol-name package))))
+   mx-packages-selected))
+
 (defun mx-packages-initialize ()
-  "Initialize the local package database without contacting repositories."
+  "Initialize locally installed packages without network or package changes.
+Return the list of configured packages that are missing."
   (interactive)
   (package-initialize)
-  (require 'use-package)
-  t)
+  (let ((missing (mx-packages-missing)))
+    (if missing
+        (display-warning
+         'mx-emacs
+         (format "Some configured packages are unavailable: %s. Their configuration will be skipped. Run ./mx-emacs.sh init to install them."
+                 (mapconcat #'symbol-name missing ", "))
+         :warning)
+      (message "mx-emacs: all configured packages are available"))
+    (when (locate-library "use-package")
+      (require 'use-package nil t))
+    missing))
 
 (defun mx-packages--run-step (description function)
   "Run FUNCTION while reporting DESCRIPTION and its result."
