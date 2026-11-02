@@ -121,7 +121,7 @@ Signal an error after reporting all failures so batch callers exit non-zero."
                  (let ((error-message (error-message-string error-data)))
                    (push (cons package error-message) failed)
                    (message "[ERROR] Failed to install %s: %s"
-                            package error-message)))))
+                            package error-message))))))
         (message "[OK] All selected packages are already installed.")))
     (mx-packages--report-installation-summary installed failed refresh-error)
     (when (or failed refresh-error)
