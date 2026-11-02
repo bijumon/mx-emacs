@@ -61,8 +61,14 @@
 
 (when (and (bound-and-true-p minimal-emacs-package-initialize-and-refresh)
            (not (bound-and-true-p byte-compile-current-file)))
-  ;; Startup only initializes packages already present on disk.
-  (mx-packages-initialize))
+  ;; Initialize and refresh package contents again if needed
+  (package-initialize)
+  (unless package-archive-contents
+    (package-refresh-contents))
+  (when (and (version< emacs-version "29.1")
+             (not (package-installed-p 'use-package)))
+    (package-install 'use-package))
+  (require 'use-package))
 
 ;;; Misc
 
