@@ -77,4 +77,12 @@
 ;; Keep a list of recently visited files.
 (recentf-mode 1)
 
+;;; Package selection
+
+;; Keep package.el's autoremove operation aligned with the packages declared
+;; in this configuration. Include use-package, which bootstraps these forms.
+(setq package-selected-packages
+      '(use-package vertico marginalia orderless consult embark
+                    embark-consult wgrep))
+
 ;;; post-init.el ends here
