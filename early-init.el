@@ -513,7 +513,7 @@ this stage of initialization."
  use-package-expand-minimally t
  use-package-minimum-reported-time (if init-file-debug 0 0.1)
  use-package-verbose init-file-debug
- use-package-always-ensure (not noninteractive)
+ use-package-always-ensure nil
  use-package-enable-imenu-support t)
 
 ;; Load package helpers when present. A missing packages.el must not
