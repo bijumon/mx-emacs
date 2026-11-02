@@ -43,12 +43,14 @@ When REFRESH is non-nil, refresh package archive contents unconditionally."
   (message "mx-emacs: package system initialized"))
 
 (defun mx-packages-init ()
-  "Install all packages selected by the loaded use-package declarations."
+  "Initialize packages declared by the loaded configuration.
+The configuration's `:ensure' declarations install missing packages as
+they are evaluated during startup."
   (interactive)
   (mx-packages-initialize)
-  (message "mx-emacs: installing declared packages...")
-  (package-install-selected-packages)
-  (message "mx-emacs: package initialization complete"))
+  (unless (featurep 'use-package)
+    (user-error "use-package is not available"))
+  (message "mx-emacs: package declarations have been processed"))
 
 (defun mx-packages-sync ()
   "Refresh package archives and upgrade installed packages."
