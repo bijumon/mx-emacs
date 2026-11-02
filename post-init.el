@@ -1,73 +1,65 @@
 ;;; post-init.el --- User package configuration -*- lexical-binding: t; -*-
 
-;; https://protesilaos.com/codelog/2024-02-17-emacs-modern-minibuffer-packages/
-;; The `vertico' package applies a vertical layout to the minibuffer.
-;; It also pops up the minibuffer eagerly so we can see the available
-;; options without further interactions.  This package is very fast
-;; and "just works", though it is also highly customisable.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:cff33514-d3ac-4c16-a889-ea39d7346dc5
-(use-package vertico
-    :config
-  (setq vertico-cycle t)
-  (setq vertico-resize nil)
-  (vertico-mode 1))
+;; Optional package configuration. Startup remains usable when one or more
+;; packages have not yet been installed; run ./mx-emacs.sh init to install them.
+(when (and (locate-library "use-package")
+           (require 'use-package nil t))
+  ;; Vertico provides a vertical minibuffer completion interface.
+  (when (locate-library "vertico")
+    (use-package vertico
+      :config
+      (setq vertico-cycle t
+            vertico-resize nil)
+      (vertico-mode 1)))
 
-;; The `marginalia' package provides helpful annotations next to
-;; completion candidates in the minibuffer.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:bd3f7a1d-a53d-4d3e-860e-25c5b35d8e7e
-(use-package marginalia
-    :config
-  (marginalia-mode 1))
+  ;; Marginalia adds annotations to completion candidates.
+  (when (locate-library "marginalia")
+    (use-package marginalia
+      :config
+      (marginalia-mode 1)))
 
-;; The `orderless' package enables out-of-order pattern matching.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:7cc77fd0-8f98-4fc0-80be-48a758fcb6e2
-(use-package orderless
-    :config
-  (setq completion-styles '(orderless basic)))
+  ;; Orderless enables out-of-order pattern matching.
+  (when (locate-library "orderless")
+    (use-package orderless
+      :config
+      (setq completion-styles '(orderless basic))))
 
-;; The `consult' package provides enhanced versions of built-in commands.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:22e97b4c-d88d-4deb-9ab3-f80631f9ff1d
-(use-package consult
-    :bind (;; A recursive grep
-         ("M-s M-g" . consult-grep)
-         ;; Search for files names recursively
-         ("M-s M-f" . consult-find)
-         ;; Search through the outline
-         ("M-s M-o" . consult-outline)
-         ;; Search the current buffer
-         ("M-s M-l" . consult-line)
-         ;; Switch buffers, bookmarks, and recent files
-         ("M-s M-b" . consult-buffer)))
+  ;; Consult provides enhanced versions of built-in commands.
+  (when (locate-library "consult")
+    (use-package consult
+      :bind (("M-s M-g" . consult-grep)
+             ("M-s M-f" . consult-find)
+             ("M-s M-o" . consult-outline)
+             ("M-s M-l" . consult-line)
+             ("M-s M-b" . consult-buffer))))
 
-;; The `embark' package provides context-sensitive actions.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:61863da4-8739-42ae-a30f-6e9d686e1995
-(use-package embark
-    :bind (("C-." . embark-act)
-         :map minibuffer-local-map
-         ("C-c C-c" . embark-collect)
-         ("C-c C-e" . embark-export)))
+  ;; Embark provides context-sensitive actions.
+  (when (locate-library "embark")
+    (use-package embark
+      :bind (("C-." . embark-act)
+             :map minibuffer-local-map
+             ("C-c C-c" . embark-collect)
+             ("C-c C-e" . embark-export))))
 
-;; Glue code between Embark and Consult.
-(use-package embark-consult)
+  ;; Glue code between Embark and Consult.
+  (when (locate-library "embark-consult")
+    (use-package embark-consult))
 
-;; Edit grep results in a grep-mode buffer.
-;;
-;; Further reading: https://protesilaos.com/emacs/dotemacs#h:9a3581df-ab18-4266-815e-2edd7f7e4852
-(use-package wgrep
-    :bind (:map grep-mode-map
-              ("e" . wgrep-change-to-wgrep-mode)
-              ("C-x C-q" . wgrep-change-to-wgrep-mode)
-              ("C-c C-c" . wgrep-finish-edit)))
+  ;; Edit grep results in a grep-mode buffer.
+  (when (locate-library "wgrep")
+    (use-package wgrep
+      :bind (:map grep-mode-map
+                  ("e" . wgrep-change-to-wgrep-mode)
+                  ("C-x C-q" . wgrep-change-to-wgrep-mode)
+                  ("C-c C-c" . wgrep-finish-edit)))))
 
-;; Save minibuffer histories for completion frameworks.
+;; Built-in features remain enabled even when optional packages are missing.
 (savehist-mode 1)
-
-;; Keep a list of recently visited files.
 (recentf-mode 1)
+
+;;; Package selection
+(setq package-selected-packages
+      '(use-package vertico marginalia orderless consult embark
+                    embark-consult wgrep))
 
 ;;; post-init.el ends here
