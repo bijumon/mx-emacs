@@ -535,7 +535,7 @@ this stage of initialization."
                               ("melpa-stable" . 50)))
 
 ;; Package commands are available during normal interactive sessions.
-(load (expand-file-name "packages.el" user-emacs-directory) nil 'nomessage)
+(load (expand-file-name "packages.el" user-emacs-directory) t 'nomessage)
 
 ;;; Load post-early-init.el
 
