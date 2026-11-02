@@ -87,9 +87,8 @@ This reduces visual clutter and slightly enhances startup performance. The
 tradeoff is that the mode line is hidden during the startup phase.")
 
 (defvar minimal-emacs-package-initialize-and-refresh t
-  "Whether to automatically initialize and refresh packages.
-When set to non-nil, Emacs will automatically call `package-initialize' and
-`package-refresh-contents' to set up and update the package system.")
+  "Whether to initialize the local package database during startup.
+This never refreshes archives or installs, upgrades, or removes packages.")
 
 (defvar minimal-emacs-inhibit-redisplay-during-startup nil
   "Suppress redisplay during startup to improve performance.
