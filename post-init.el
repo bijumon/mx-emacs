@@ -54,7 +54,7 @@
 
 ;; Glue code between Embark and Consult.
 (use-package embark-consult
-  :ensure t)
+  )
 
 ;; Edit grep results in a grep-mode buffer.
 ;;
