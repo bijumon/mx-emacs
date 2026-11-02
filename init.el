@@ -60,7 +60,8 @@
 ;;; package.el
 
 (when (and (bound-and-true-p minimal-emacs-package-initialize-and-refresh)
-           (not (bound-and-true-p byte-compile-current-file)))
+           (not (bound-and-true-p byte-compile-current-file))
+           (fboundp 'mx-packages-initialize))
   ;; Startup only reads the local package database; it must never access
   ;; package archives or mutate the installed package set.
   (mx-packages-initialize))
