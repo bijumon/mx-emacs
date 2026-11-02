@@ -5,9 +5,8 @@
 
 ;;; Commentary:
 
-;; Centralize package archive configuration and package lifecycle commands.
-;; This file is loaded from early-init.el so archive settings are in place
-;; before package.el is initialized.
+;; Package startup is deliberately offline. Package changes happen only through
+;; the explicit commands in this file.
 
 ;;; Code:
 
@@ -26,49 +25,44 @@
                               ("melpa"        . 70)
                               ("melpa-stable" . 50)))
 
-(defun mx-packages-initialize (&optional refresh)
-  "Initialize package.el and ensure use-package is available.
-When REFRESH is non-nil, refresh package archive contents unconditionally."
-  (interactive "P")
+(defconst mx-packages-selected
+  '(use-package vertico marginalia orderless consult embark
+    embark-consult wgrep)
+  "Packages required by this configuration.")
+
+(setq package-selected-packages mx-packages-selected)
+
+(defun mx-packages-initialize ()
+  "Initialize the local package database without network access."
+  (interactive)
   (package-initialize)
-  (when (or refresh (null package-archive-contents))
-    (message "mx-emacs: refreshing package archive contents...")
-    (package-refresh-contents))
-  ;; Emacs 29 includes use-package; older supported installations need it
-  ;; installed from the configured archives.
-  (unless (package-installed-p 'use-package)
-    (message "mx-emacs: installing use-package...")
-    (package-install 'use-package))
-  (require 'use-package)
-  (message "mx-emacs: package system initialized"))
+  ;; Emacs 29 bundles use-package. Do not install it during startup.
+  (unless (require 'use-package nil t)
+    (display-warning 'mx-emacs
+                     "use-package is unavailable; run M-x mx-packages-init"
+                     :warning))
+  t)
 
 (defun mx-packages-init ()
-  "Initialize packages declared by the loaded configuration.
-The configuration's `:ensure' declarations install missing packages as
-they are evaluated during startup."
+  "Refresh archives and install packages required by this configuration."
   (interactive)
-  (mx-packages-initialize)
-  (unless (featurep 'use-package)
-    (user-error "use-package is not available"))
-  (message "mx-emacs: package declarations have been processed"))
+  (package-refresh-contents)
+  (package-install-selected-packages)
+  (message "mx-emacs: required packages are installed"))
 
 (defun mx-packages-sync ()
-  "Refresh package archives and upgrade installed packages."
+  "Refresh archives and upgrade installed packages."
   (interactive)
-  (mx-packages-initialize t)
-  (message "mx-emacs: upgrading installed packages...")
+  (package-refresh-contents)
   (if (fboundp 'package-upgrade-all)
       (package-upgrade-all)
     (user-error "This Emacs version does not provide package-upgrade-all"))
   (message "mx-emacs: package synchronization complete"))
 
 (defun mx-packages-clean ()
-  "Remove packages that are no longer required by the configuration.
-The configuration must be loaded first so package-selected-packages
-reflects its current use-package declarations."
+  "Remove packages not required by this configuration."
   (interactive)
-  (mx-packages-initialize)
-  (message "mx-emacs: removing unused packages...")
+  (setq package-selected-packages mx-packages-selected)
   (package-autoremove)
   (message "mx-emacs: package cleanup complete"))
 
