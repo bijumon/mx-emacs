@@ -61,8 +61,31 @@ Return the list of configured packages that are missing."
         (push package missing)))
     (nreverse missing)))
 
+(defun mx-packages--report-installation-summary (installed failed refresh-error)
+  "Report INSTALLED and FAILED packages and REFRESH-ERROR, if any."
+  (message "")
+  (message "Package installation summary")
+  (message "----------------------------")
+  (message "Installed (%d): %s"
+           (length installed)
+           (if installed
+               (mapconcat #'symbol-name (nreverse installed) ", ")
+             "none"))
+  (message "Failed (%d): %s"
+           (length failed)
+           (if failed
+               (mapconcat (lambda (failure)
+                            (format "%s: %s" (car failure) (cdr failure)))
+                          (nreverse failed) "; ")
+             "none"))
+  (when refresh-error
+    (message "Archive refresh error: %s" refresh-error))
+  (message ""))
+
 (defun mx-packages-init ()
-  "Refresh package archives and install missing configured packages."
+  "Refresh package archives and install missing configured packages.
+Attempt every missing package even if an earlier installation fails.
+Signal an error after reporting all failures so batch callers exit non-zero."
   (interactive)
   (message "")
   (message "Emacs package manager")
@@ -70,25 +93,41 @@ Return the list of configured packages that are missing."
   (mx-packages--run-step
    "Initializing package archives"
    #'package-initialize)
-  (mx-packages--run-step
-   "Refreshing package contents"
-   #'package-refresh-contents)
-  (let ((missing (mx-packages--missing)))
-    (if missing
+  (let ((refresh-error nil)
+        (installed nil)
+        (failed nil))
+    ;; Keep going after a refresh error: cached archive metadata may still
+    ;; allow some packages to install, and every missing package is attempted.
+    (message "[INIT] Refreshing package contents...")
+    (condition-case error-data
         (progn
-          (message "")
-          (message "[INIT] Installing %d missing package(s)..." (length missing))
-          (dolist (package missing)
-            (message "[INSTALL] %s" package)
-            (condition-case error-data
-                (package-install package)
-              (error
-               (message "[ERROR] Failed to install %s: %s"
-                        package (error-message-string error-data))
-               (signal (car error-data) (cdr error-data)))))
-          (message ""))
-      (message "[OK] All selected packages are already installed.")
-      (message "")))
+          (package-refresh-contents)
+          (message "[OK] Refreshing package contents."))
+      (error
+       (setq refresh-error (error-message-string error-data))
+       (message "[ERROR] Refreshing package contents: %s" refresh-error)))
+    (let ((missing (mx-packages--missing)))
+      (if missing
+          (progn
+            (message "")
+            (message "[INIT] Installing %d missing package(s)..." (length missing))
+            (dolist (package missing)
+              (message "[INSTALL] %s" package)
+              (condition-case error-data
+                  (progn
+                    (package-install package)
+                    (push package installed))
+                (error
+                 (let ((error-message (error-message-string error-data)))
+                   (push (cons package error-message) failed)
+                   (message "[ERROR] Failed to install %s: %s"
+                            package error-message)))))
+        (message "[OK] All selected packages are already installed.")))
+    (mx-packages--report-installation-summary installed failed refresh-error)
+    (when (or failed refresh-error)
+      (error "mx-emacs: package initialization failed (%d installation failure(s)%s)"
+             (length failed)
+             (if refresh-error ", archive refresh failed" ""))))
   (mx-packages--run-step
    "Initializing installed packages"
    #'package-initialize)
