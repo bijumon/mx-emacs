@@ -13,11 +13,10 @@ case "$COMMAND" in
     ;;
 esac
 
-# Load the same early and regular configuration used by interactive Emacs.
-# In batch mode, enable :ensure so use-package declarations install packages.
+# Load the normal configuration. Startup is offline; the selected command
+# performs package changes explicitly after configuration has loaded.
 exec "$EMACS" --batch -Q \
   --eval "(setq user-emacs-directory (file-name-as-directory \"$CONFIG_DIR\"))" \
   -l "$CONFIG_DIR/early-init.el" \
-  --eval '(setq use-package-always-ensure t)' \
   -l "$CONFIG_DIR/init.el" \
   --eval "(mx-packages-$COMMAND)"
