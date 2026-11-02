@@ -48,6 +48,10 @@
   (interactive)
   (package-refresh-contents)
   (package-install-selected-packages)
+  ;; Re-evaluate declarations now that any missing packages are available.
+  (let ((post-init (expand-file-name "post-init.el" user-emacs-directory)))
+    (when (file-readable-p post-init)
+      (load post-init nil t)))
   (message "mx-emacs: required packages are installed"))
 
 (defun mx-packages-sync ()
