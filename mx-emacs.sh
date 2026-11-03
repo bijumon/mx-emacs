@@ -5,23 +5,26 @@ CONFIG_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 EMACS="${EMACS:-emacs}"
 COMMAND="${1:-}"
 ASSUME_YES=0
+shift || true
 
-if [[ "$COMMAND" == "clean" && "${2:-}" == "--yes" ]]; then
+if [[ "${1:-}" == "--yes" ]]; then
+  if [[ "$COMMAND" != "sync" && "$COMMAND" != "clean" ]]; then
+    printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
+    exit 2
+  fi
   ASSUME_YES=1
-  shift 2
-else
-  shift || true
+  shift
 fi
 
 if [[ $# -ne 0 ]]; then
-  printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
+  printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
   exit 2
 fi
 
 case "$COMMAND" in
   init|sync|clean) ;;
   *)
-    printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
+    printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
     exit 2
     ;;
 esac
@@ -37,7 +40,11 @@ if [[ "$COMMAND" == "clean" && "$ASSUME_YES" -eq 0 ]]; then
 elif [[ "$COMMAND" == "clean" ]]; then
   CLEAN_EXPRESSION="(mx-packages-clean t)"
 else
-  CLEAN_EXPRESSION="(mx-packages-$COMMAND)"
+  if [[ "$ASSUME_YES" -eq 1 ]]; then
+    CLEAN_EXPRESSION="(mx-packages-$COMMAND t)"
+  else
+    CLEAN_EXPRESSION="(mx-packages-$COMMAND)"
+  fi
 fi
 
 exec "$EMACS" --batch -Q \
