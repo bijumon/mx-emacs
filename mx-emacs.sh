@@ -21,7 +21,7 @@ fi
 case "$COMMAND" in
   init|sync|status|clean) ;;
   *)
-    printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
+    printf 'Usage: %s {init|sync|status|clean [--yes]}\n' "$0" >&2
     exit 2
     ;;
 esac
