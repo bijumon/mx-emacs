@@ -6,7 +6,7 @@ EMACS="${EMACS:-emacs}"
 COMMAND="${1:-}"
 ASSUME_YES=0
 
-if [[ "$COMMAND" == "clean" && "${2:-}" == "--yes" ]]; then
+if [[ "${2:-}" == "--yes" && ( "$COMMAND" == "clean" || "$COMMAND" == "sync" ) ]]; then
   ASSUME_YES=1
   shift 2
 else
@@ -36,6 +36,8 @@ if [[ "$COMMAND" == "clean" && "$ASSUME_YES" -eq 0 ]]; then
     --eval "(mx-packages-clean)"
 elif [[ "$COMMAND" == "clean" ]]; then
   CLEAN_EXPRESSION="(mx-packages-clean t)"
+elif [[ "$COMMAND" == "sync" && "$ASSUME_YES" -eq 1 ]]; then
+  CLEAN_EXPRESSION="(mx-packages-sync t)"
 else
   CLEAN_EXPRESSION="(mx-packages-$COMMAND)"
 fi
