@@ -160,8 +160,8 @@ packages that can actually be upgraded by this package configuration."
 ASSUME-YES bypasses confirmation. Batch mode without it always declines."
   (cond
    (assume-yes t)
-   (noninteractive
-    (message "[ABORT] Batch upgrades require the explicit --yes option.")
+   ((and noninteractive (not (getenv "MX_EMACS_CONFIRM")))
+    (message "[ABORT] Batch upgrades require a terminal or the explicit --yes option.")
     nil)
    (t
     (string-equal
@@ -250,8 +250,8 @@ In batch mode, remove packages only when ASSUME-YES is non-nil."
       (let ((confirmed
              (cond
               (assume-yes t)
-              (noninteractive
-               (message "[ABORT] Batch cleanup requires the explicit --yes option.")
+              ((and noninteractive (not (getenv "MX_EMACS_CONFIRM")))
+               (message "[ABORT] Batch cleanup requires a terminal or the explicit --yes option.")
                nil)
               (t
                (string-equal
