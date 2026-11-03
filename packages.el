@@ -61,6 +61,47 @@ Return the list of configured packages that are missing."
         (push package missing)))
     (nreverse missing)))
 
+(defun mx-packages-status ()
+  "Report configured, installed, missing, and unselected packages.
+This read-only command uses only locally available package metadata."
+  (interactive)
+  (package-initialize)
+  (let* ((configured mx-packages-selected)
+         (installed (mapcar #'car package-alist))
+         (missing (mx-packages--missing))
+         (unselected (seq-remove
+                      (lambda (package)
+                        (memq package configured))
+                      installed)))
+    (message "")
+    (message "MX-Emacs package status")
+    (message "-----------------------")
+    (message "Configured packages: %d" (length configured))
+    (message "Installed packages: %d" (length installed))
+    (message "Missing configured packages: %d" (length missing))
+    (message "Installed but unselected packages: %d" (length unselected))
+    (message "")
+    (message "Missing configured packages:")
+    (if missing
+        (dolist (package missing)
+          (message "  - %s" package))
+      (message "  none"))
+    (message "")
+    (message "Installed but unselected packages:")
+    (if unselected
+        (dolist (package unselected)
+          (message "  - %s" package))
+      (message "  none"))
+    (when missing
+      (message "")
+      (message "Action: run ./mx-emacs.sh init to install missing configured packages.")
+      (message "You can also run M-x mx-packages-init inside Emacs."))
+    (message "")
+    (list :configured (length configured)
+          :installed (length installed)
+          :missing missing
+          :unselected unselected)))
+
 (defun mx-packages--report-installation-summary (installed failed refresh-error)
   "Report INSTALLED and FAILED packages and REFRESH-ERROR, if any."
   (message "")
