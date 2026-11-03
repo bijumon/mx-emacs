@@ -36,9 +36,9 @@ fi
 
 # Load only the package-management definitions. Loading init.el here would
 # load post-init.el before missing packages have been installed.
-if [[ "$COMMAND" == "clean" ]]; then
+if [[ "$COMMAND" == "clean" && "$ASSUME_YES" -eq 1 ]]; then
   COMMAND_EXPRESSION="(mx-packages-clean t)"
-elif [[ "$COMMAND" == "sync" ]]; then
+elif [[ "$COMMAND" == "sync" && "$ASSUME_YES" -eq 1 ]]; then
   COMMAND_EXPRESSION="(mx-packages-sync t)"
 else
   COMMAND_EXPRESSION="(mx-packages-$COMMAND)"
