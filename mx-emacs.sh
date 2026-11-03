@@ -26,15 +26,17 @@ case "$COMMAND" in
     ;;
 esac
 
+# Batch-mode Emacs reads minibuffer input from stdin.  Enable confirmation
+# only when this script is attached to a terminal; unattended jobs must use
+# the explicit --yes option.
+if [[ ( "$COMMAND" == "clean" || "$COMMAND" == "sync" ) &&
+      "$ASSUME_YES" -eq 0 && -t 0 ]]; then
+  export MX_EMACS_CONFIRM=1
+fi
+
 # Load only the package-management definitions. Loading init.el here would
 # load post-init.el before missing packages have been installed.
-if [[ ( "$COMMAND" == "clean" || "$COMMAND" == "sync" ) && "$ASSUME_YES" -eq 0 ]]; then
-  # Both operations need a real terminal so the user can review and confirm.
-  exec "$EMACS" -Q --no-window-system \
-    --eval "(setq user-emacs-directory (file-name-as-directory \"$CONFIG_DIR\"))" \
-    -l "$CONFIG_DIR/early-init.el" \
-    --eval "(mx-packages-$COMMAND)"
-elif [[ "$COMMAND" == "clean" ]]; then
+if [[ "$COMMAND" == "clean" ]]; then
   COMMAND_EXPRESSION="(mx-packages-clean t)"
 elif [[ "$COMMAND" == "sync" ]]; then
   COMMAND_EXPRESSION="(mx-packages-sync t)"
