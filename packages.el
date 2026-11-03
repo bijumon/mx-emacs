@@ -157,7 +157,7 @@ packages that can actually be upgraded by this package configuration."
 
 (defun mx-packages--confirm-upgrades (upgrades assume-yes)
   "Return non-nil when UPGRADES should be applied.
-ASSUME-YES bypasses confirmation. Batch mode without it always declines."
+ASSUME-YES bypasses confirmation. Batch mode requires explicit terminal confirmation permission or ASSUME-YES."
   (cond
    (assume-yes t)
    ((and noninteractive (not (getenv "MX_EMACS_CONFIRM")))
@@ -233,7 +233,7 @@ ASSUME-YES skips the confirmation prompt for deliberate non-interactive use."
 
 (defun mx-packages-clean (&optional assume-yes)
   "Preview and remove packages not required by this configuration.
-In batch mode, remove packages only when ASSUME-YES is non-nil."
+In batch mode, require terminal confirmation permission or ASSUME-YES before removal."
   (interactive)
   (setq package-selected-packages mx-packages-selected)
   (package-initialize)
