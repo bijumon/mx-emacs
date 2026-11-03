@@ -139,27 +139,21 @@ Signal an error after reporting all failures so batch callers exit non-zero."
   (message "[OK] MX-Emacs initialization completed."))
 
 (defun mx-packages--available-upgrades ()
-  "Return installed package descriptions with newer archive candidates.
-Each element is a list of PACKAGE, INSTALLED-DESC, and CANDIDATE-DESC."
-  (let (upgrades)
-    (dolist (entry package-alist)
-      (let* ((package (car entry))
-             (installed (car (cdr entry)))
-             (candidates (cdr (assq package package-archive-contents)))
-             (candidate
-              (car (sort (copy-sequence candidates)
-                         (lambda (left right)
-                           (version-list-< (package-desc-version right)
-                                           (package-desc-version left)))))))
-        (when (and candidate
-                   (version-list-<
-                    (package-desc-version installed)
-                    (package-desc-version candidate)))
-          (push (list package installed candidate) upgrades))))
-    (sort upgrades
-          (lambda (left right)
-            (string< (symbol-name (car left))
-                     (symbol-name (car right)))))))
+  "Return package names that package.el considers upgradeable.
+Each element is a list of PACKAGE, INSTALLED-DESC, and CANDIDATE-DESC.
+Use package.el's own upgradeability check so the preview matches the
+packages that can actually be upgraded by this package configuration."
+  (unless (fboundp 'package--upgradeable-packages)
+    (error "mx-emacs: package upgrade preview is unsupported by this Emacs version"))
+  (mapcar
+   (lambda (package)
+     (let ((installed (cadr (assq package package-alist)))
+           (candidate (cadr (assq package package-archive-contents))))
+       (unless (and installed candidate)
+         (error "mx-emacs: package.el reported an upgrade without version metadata for %s"
+                package))
+       (list package installed candidate)))
+   (package--upgradeable-packages package-install-upgrade-built-in)))
 
 (defun mx-packages--confirm-upgrades (upgrades assume-yes)
   "Return non-nil when UPGRADES should be applied.
@@ -180,9 +174,7 @@ ASSUME-YES bypasses confirmation. Batch mode without it always declines."
 (defun mx-packages-sync (&optional assume-yes)
   "Refresh archives, preview available upgrades, and upgrade on confirmation.
 ASSUME-YES skips the confirmation prompt for deliberate non-interactive use."
-  (interactive "P")
-  (unless (fboundp 'package-upgrade-all)
-    (user-error "mx-emacs: package-upgrade-all is unavailable in this Emacs version"))
+  (interactive)
   (message "")
   (message "Emacs package manager")
   (message "------------------------")
@@ -202,11 +194,41 @@ ASSUME-YES skips the confirmation prompt for deliberate non-interactive use."
                    (package-version-join (package-desc-version installed))
                    (package-version-join (package-desc-version candidate)))))
       (if (mx-packages--confirm-upgrades upgrades assume-yes)
-          (progn
-            (mx-packages--run-step
-             "Upgrading installed packages"
-             #'package-upgrade-all)
-            (message "[OK] Package synchronization completed."))
+          (let ((failed nil)
+                (upgraded nil))
+            ;; Upgrade the exact packages shown in the preview.  Calling
+            ;; package-upgrade-all here would refresh the archives a second
+            ;; time and could upgrade a different set from the one confirmed.
+            (dolist (upgrade upgrades)
+              (let ((package (car upgrade)))
+                (message "[UPGRADE] %s" package)
+                (condition-case error-data
+                    (progn
+                      (package-upgrade package)
+                      (push package upgraded))
+                  (error
+                   (push (cons package (error-message-string error-data)) failed)
+                   (message "[ERROR] Failed to upgrade %s: %s"
+                            package (error-message-string error-data)))))
+            (message "")
+            (message "Package upgrade summary")
+            (message "------------------------")
+            (message "Upgraded (%d): %s"
+                     (length upgraded)
+                     (if upgraded
+                         (mapconcat #'symbol-name (nreverse upgraded) ", ")
+                       "none"))
+            (message "Failed (%d): %s"
+                     (length failed)
+                     (if failed
+                         (mapconcat (lambda (failure)
+                                      (format "%s: %s" (car failure) (cdr failure)))
+                                    (nreverse failed) "; ")
+                       "none"))
+            (if failed
+                (error "mx-emacs: package synchronization failed (%d upgrade failure(s))"
+                       (length failed))
+              (message "[OK] Package synchronization completed.")))
         (message "[CANCELLED] Package synchronization skipped.")))))
 
 (defun mx-packages-clean (&optional assume-yes)
