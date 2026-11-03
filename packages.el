@@ -209,7 +209,7 @@ ASSUME-YES skips the confirmation prompt for deliberate non-interactive use."
                   (error
                    (push (cons package (error-message-string error-data)) failed)
                    (message "[ERROR] Failed to upgrade %s: %s"
-                            package (error-message-string error-data)))))
+                            package (error-message-string error-data))))))
             (message "")
             (message "Package upgrade summary")
             (message "------------------------")
