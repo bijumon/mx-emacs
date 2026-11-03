@@ -28,21 +28,21 @@ esac
 
 # Load only the package-management definitions. Loading init.el here would
 # load post-init.el before missing packages have been installed.
-if [[ "$COMMAND" == "clean" && "$ASSUME_YES" -eq 0 ]]; then
-  # Cleanup needs a real terminal so the user can review and confirm removals.
+if [[ ( "$COMMAND" == "clean" || "$COMMAND" == "sync" ) && "$ASSUME_YES" -eq 0 ]]; then
+  # Both operations need a real terminal so the user can review and confirm.
   exec "$EMACS" -Q --no-window-system \
     --eval "(setq user-emacs-directory (file-name-as-directory \"$CONFIG_DIR\"))" \
     -l "$CONFIG_DIR/early-init.el" \
-    --eval "(mx-packages-clean)"
+    --eval "(mx-packages-$COMMAND)"
 elif [[ "$COMMAND" == "clean" ]]; then
-  CLEAN_EXPRESSION="(mx-packages-clean t)"
-elif [[ "$COMMAND" == "sync" && "$ASSUME_YES" -eq 1 ]]; then
-  CLEAN_EXPRESSION="(mx-packages-sync t)"
+  COMMAND_EXPRESSION="(mx-packages-clean t)"
+elif [[ "$COMMAND" == "sync" ]]; then
+  COMMAND_EXPRESSION="(mx-packages-sync t)"
 else
-  CLEAN_EXPRESSION="(mx-packages-$COMMAND)"
+  COMMAND_EXPRESSION="(mx-packages-$COMMAND)"
 fi
 
 exec "$EMACS" --batch -Q \
   --eval "(setq user-emacs-directory (file-name-as-directory \"$CONFIG_DIR\"))" \
   -l "$CONFIG_DIR/early-init.el" \
-  --eval "$CLEAN_EXPRESSION"
+  --eval "$COMMAND_EXPRESSION"
