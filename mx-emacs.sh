@@ -9,7 +9,7 @@ shift || true
 
 if [[ "${1:-}" == "--yes" ]]; then
   if [[ "$COMMAND" != "sync" && "$COMMAND" != "clean" ]]; then
-    printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
+    printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
     exit 2
   fi
   ASSUME_YES=1
@@ -17,14 +17,14 @@ if [[ "${1:-}" == "--yes" ]]; then
 fi
 
 if [[ $# -ne 0 ]]; then
-  printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
+  printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
   exit 2
 fi
 
 case "$COMMAND" in
   init|sync|clean) ;;
   *)
-    printf 'Usage: %s {init|sync|clean [--yes]}\\n' "$0" >&2
+    printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
     exit 2
     ;;
 esac
