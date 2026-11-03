@@ -14,12 +14,12 @@ else
 fi
 
 if [[ $# -ne 0 ]]; then
-  printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
+  printf 'Usage: %s {init|sync|status|clean [--yes]}\n' "$0" >&2
   exit 2
 fi
 
 case "$COMMAND" in
-  init|sync|clean) ;;
+  init|sync|status|clean) ;;
   *)
     printf 'Usage: %s {init|sync|clean [--yes]}\n' "$0" >&2
     exit 2
