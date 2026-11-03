@@ -138,9 +138,49 @@ Signal an error after reporting all failures so batch callers exit non-zero."
            nil 'nomessage)))
   (message "[OK] MX-Emacs initialization completed."))
 
-(defun mx-packages-sync ()
-  "Refresh package archives and upgrade installed packages."
-  (interactive)
+(defun mx-packages--available-upgrades ()
+  "Return installed package descriptions with newer archive candidates.
+Each element is a list of PACKAGE, INSTALLED-DESC, and CANDIDATE-DESC."
+  (let (upgrades)
+    (dolist (entry package-alist)
+      (let* ((package (car entry))
+             (installed (car (cdr entry)))
+             (candidates (cdr (assq package package-archive-contents)))
+             (candidate
+              (car (sort (copy-sequence candidates)
+                         (lambda (left right)
+                           (version-list-< (package-desc-version right)
+                                           (package-desc-version left)))))))
+        (when (and candidate
+                   (version-list-<
+                    (package-desc-version installed)
+                    (package-desc-version candidate)))
+          (push (list package installed candidate) upgrades))))
+    (sort upgrades
+          (lambda (left right)
+            (string< (symbol-name (car left))
+                     (symbol-name (car right)))))))
+
+(defun mx-packages--confirm-upgrades (upgrades assume-yes)
+  "Return non-nil when UPGRADES should be applied.
+ASSUME-YES bypasses confirmation. Batch mode without it always declines."
+  (cond
+   (assume-yes t)
+   (noninteractive
+    (message "[ABORT] Batch upgrades require the explicit --yes option.")
+    nil)
+   (t
+    (string-equal
+     (downcase
+      (string-trim
+       (read-string
+        (format "Upgrade %d package(s)? [y/N] " (length upgrades)))))
+     "y"))))
+
+(defun mx-packages-sync (&optional assume-yes)
+  "Refresh archives, preview available upgrades, and upgrade on confirmation.
+ASSUME-YES skips the confirmation prompt for deliberate non-interactive use."
+  (interactive "P")
   (unless (fboundp 'package-upgrade-all)
     (user-error "mx-emacs: package-upgrade-all is unavailable in this Emacs version"))
   (message "")
@@ -149,10 +189,25 @@ Signal an error after reporting all failures so batch callers exit non-zero."
   (mx-packages--run-step
    "Refreshing package contents"
    #'package-refresh-contents)
-  (mx-packages--run-step
-   "Upgrading installed packages"
-   #'package-upgrade-all)
-  (message "[OK] Package synchronization completed."))
+  (let ((upgrades (mx-packages--available-upgrades)))
+    (if (null upgrades)
+        (message "[OK] All installed packages are up to date; no upgrades available.")
+      (message "")
+      (message "Available package upgrades (%d)" (length upgrades))
+      (message "------------------------------")
+      (dolist (upgrade upgrades)
+        (pcase-let ((`(,package ,installed ,candidate) upgrade))
+          (message "  %-24s %s -> %s"
+                   package
+                   (package-version-join (package-desc-version installed))
+                   (package-version-join (package-desc-version candidate)))))
+      (if (mx-packages--confirm-upgrades upgrades assume-yes)
+          (progn
+            (mx-packages--run-step
+             "Upgrading installed packages"
+             #'package-upgrade-all)
+            (message "[OK] Package synchronization completed."))
+        (message "[CANCELLED] Package synchronization skipped.")))))
 
 (defun mx-packages-clean (&optional assume-yes)
   "Preview and remove packages not required by this configuration.
