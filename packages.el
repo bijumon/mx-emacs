@@ -204,12 +204,70 @@ Each entry is (PACKAGE INSTALLED-DESC CANDIDATE-DESC)."
               (package-desc-version (caddr upgrade)))))
   (message ""))
 
+(defun mx-packages--install-upgrades (upgrades)
+  "Install the exact candidate descriptions in UPGRADES.
+Continue after individual failures and signal an error if any upgrade fails."
+  (let ((succeeded 0)
+        (failed nil))
+    (dolist (upgrade upgrades)
+      (let* ((package (car upgrade))
+             (installed (cadr upgrade))
+             (candidate (caddr upgrade))
+             (version (package-version-join
+                       (package-desc-version candidate))))
+        (condition-case error-data
+            (progn
+              (message "[UPGRADE] %s -> %s" package version)
+              ;; Pass the previewed descriptor directly.  Looking up the
+              ;; package by name again would apply archive priorities and can
+              ;; select a different (older) archive version.
+              (package-install candidate 'dont-select)
+              (unless (package-installed-p candidate)
+                (error "Version %s was not installed" version))
+              ;; Match package-upgrade's old-version cleanup behavior.
+              (when (and installed
+                         (or (not (boundp 'package-retention-policy))
+                             (not (package-matches-selector-p
+                                   package-retention-policy installed))))
+                (package-delete installed 'force 'dont-unselect))
+              (setq succeeded (1+ succeeded))
+              (message "[OK] Upgraded %s to %s." package version))
+          (error
+           (let ((reason (error-message-string error-data)))
+             (push (cons package reason) failed)
+             (message "[ERROR] Failed to upgrade %s: %s" package reason))))))
+    (message "")
+    (message "Package upgrade summary")
+    (message "-----------------------")
+    (message "Upgraded (%d): %s"
+             succeeded
+             (if (> succeeded 0)
+                 (mapconcat
+                  (lambda (upgrade)
+                    (symbol-name (car upgrade)))
+                  (seq-filter
+                   (lambda (upgrade)
+                     (let ((desc (caddr upgrade)))
+                       (package-installed-p desc)))
+                   upgrades)
+                  ", ")
+               "none"))
+    (message "Failed (%d): %s"
+             (length failed)
+             (if failed
+                 (mapconcat
+                  (lambda (failure)
+                    (format "%s: %s" (car failure) (cdr failure)))
+                  (nreverse failed) "; ")
+               "none"))
+    (message "")
+    (when failed
+      (error "mx-emacs: %d package upgrade(s) failed" (length failed)))))
+
 (defun mx-packages-sync (&optional assume-yes)
   "Refresh package archives and upgrade installed packages.
 When ASSUME-YES is non-nil, proceed without an interactive confirmation."
   (interactive)
-  (unless (fboundp 'package-upgrade-all)
-    (user-error "mx-emacs: package-upgrade-all is unavailable in this Emacs version"))
   (message "")
   (message "Emacs package manager")
   (message "------------------------")
@@ -237,7 +295,8 @@ When ASSUME-YES is non-nil, proceed without an interactive confirmation."
             (progn
               (mx-packages--run-step
                "Upgrading installed packages"
-               #'package-upgrade-all)
+               (lambda ()
+                 (mx-packages--install-upgrades upgrades)))
               (message "[OK] Package synchronization completed."))
           (message "[CANCELLED] Package upgrades skipped."))))))
 (defun mx-packages-clean (&optional assume-yes)
