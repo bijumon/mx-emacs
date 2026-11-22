@@ -208,6 +208,7 @@ Each entry is (PACKAGE INSTALLED-DESC CANDIDATE-DESC)."
   "Install the exact candidate descriptions in UPGRADES.
 Continue after individual failures and signal an error if any upgrade fails."
   (let ((succeeded 0)
+        (succeeded-packages nil)
         (failed nil))
     (dolist (upgrade upgrades)
       (let* ((package (car upgrade))
@@ -231,6 +232,7 @@ Continue after individual failures and signal an error if any upgrade fails."
                                    package-retention-policy installed))))
                 (package-delete installed 'force 'dont-unselect))
               (setq succeeded (1+ succeeded))
+              (push package succeeded-packages)
               (message "[OK] Upgraded %s to %s." package version))
           (error
            (let ((reason (error-message-string error-data)))
@@ -241,16 +243,9 @@ Continue after individual failures and signal an error if any upgrade fails."
     (message "-----------------------")
     (message "Upgraded (%d): %s"
              succeeded
-             (if (> succeeded 0)
-                 (mapconcat
-                  (lambda (upgrade)
-                    (symbol-name (car upgrade)))
-                  (seq-filter
-                   (lambda (upgrade)
-                     (let ((desc (caddr upgrade)))
-                       (package-installed-p desc)))
-                   upgrades)
-                  ", ")
+             (if succeeded-packages
+                 (mapconcat #'symbol-name
+                            (nreverse succeeded-packages) ", ")
                "none"))
     (message "Failed (%d): %s"
              (length failed)
