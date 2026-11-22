@@ -214,18 +214,21 @@ Continue after individual failures and signal an error if any upgrade fails."
       (let* ((package (car upgrade))
              (installed (cadr upgrade))
              (candidate (caddr upgrade))
-             (version (package-version-join
-                       (package-desc-version candidate))))
+             (candidate-version (package-desc-version candidate))
+             (version (package-version-join candidate-version)))
         (condition-case error-data
             (progn
               (message "[UPGRADE] %s -> %s" package version)
-              ;; Pass the previewed descriptor directly.  Looking up the
-              ;; package by name again would apply archive priorities and can
-              ;; select a different (older) archive version.
+              ;; Install the exact descriptor shown in the preview rather
+              ;; than resolving the package name against archive priorities.
               (package-install candidate 'dont-select)
-              (unless (package-installed-p candidate)
+              ;; package-installed-p accepts a package name and minimum
+              ;; version on supported Emacs releases; checking the archive
+              ;; descriptor itself is not portable across those releases.
+              (unless (package-installed-p package candidate-version)
                 (error "Version %s was not installed" version))
-              ;; Match package-upgrade's old-version cleanup behavior.
+              ;; Remove the previous version only after the new version has
+              ;; been verified as installed.
               (when (and installed
                          (or (not (boundp 'package-retention-policy))
                              (not (package-matches-selector-p
@@ -266,12 +269,25 @@ When ASSUME-YES is non-nil, proceed without an interactive confirmation."
   (message "")
   (message "Emacs package manager")
   (message "------------------------")
+  ;; This command runs with package-enable-at-startup disabled, so explicitly
+  ;; initialize package-alist before looking for installed packages.
+  (mx-packages--run-step
+   "Initializing installed packages"
+   #'package-initialize)
   (mx-packages--run-step
    "Refreshing package contents"
    #'package-refresh-contents)
-  (let ((upgrades (mx-packages--available-upgrades)))
+  (let* ((missing (mx-packages--missing))
+         (upgrades (mx-packages--available-upgrades)))
+    (when missing
+      (message "[WARN] %d configured package(s) are missing: %s"
+               (length missing)
+               (mapconcat #'symbol-name missing ", "))
+      (message "[INFO] Run ./mx-emacs.sh init to install missing packages."))
     (if (null upgrades)
-        (message "[OK] All installed packages are up to date; no upgrades available.")
+        (if missing
+            (message "[INFO] No installed packages to upgrade; configured packages are missing.")
+          (message "[OK] All installed packages are up to date; no upgrades available."))
       (mx-packages--report-upgrades upgrades)
       (let ((confirmed
              (cond
