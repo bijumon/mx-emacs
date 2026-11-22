@@ -167,28 +167,29 @@ Each entry is (PACKAGE INSTALLED-DESC CANDIDATE-DESC)."
   "Display the installation status of configured packages without changing them."
   (interactive)
   (package-initialize)
-  (message "")
-  (message "MX-Emacs package status")
-  (message "-----------------------")
-  (dolist (package mx-packages-selected)
-    (let* ((descriptions (cdr (assq package package-alist)))
-           (installed (and descriptions
-                           (mx-packages--newest-desc descriptions))))
-      (if installed
-          (message "  [INSTALLED] %-20s %s"
-                   package
-                   (package-version-join
-                    (package-desc-version installed)))
-        (message "  [MISSING]   %s" package))))
-  (message "")
-  (message "Configured packages: %d; installed: %d; missing: %d"
-           (length mx-packages-selected)
-           (length (seq-filter
-                    (lambda (package)
-                      (package-installed-p package))
-                    mx-packages-selected))
-           (length (mx-packages-missing))))
-
+  (let ((installed-packages
+         (seq-filter #'package-installed-p mx-packages-selected)))
+    (message "")
+    (message "MX-Emacs package status")
+    (message "-----------------------")
+    (dolist (package mx-packages-selected)
+      (if (memq package installed-packages)
+          (let* ((descriptions (cdr (assq package package-alist)))
+                 (installed (and descriptions
+                                 (mx-packages--newest-desc descriptions))))
+            (message "  [INSTALLED] %-20s %s"
+                     package
+                     (if installed
+                         (package-version-join
+                          (package-desc-version installed))
+                       "built-in / version unavailable")))
+        (message "  [MISSING]   %s" package)))
+    (message "")
+    (message "Configured packages: %d; installed: %d; missing: %d"
+             (length mx-packages-selected)
+             (length installed-packages)
+             (- (length mx-packages-selected)
+                (length installed-packages)))))
 (defun mx-packages--report-upgrades (upgrades)
   "Display UPGRADES with installed and candidate versions."
   (message "")
