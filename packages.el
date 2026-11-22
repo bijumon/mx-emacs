@@ -163,6 +163,32 @@ Each entry is (PACKAGE INSTALLED-DESC CANDIDATE-DESC)."
                     (package-desc-version candidate)))
           (push (list package installed candidate) upgrades))))
     (nreverse upgrades)))
+(defun mx-packages-status ()
+  "Display the installation status of configured packages without changing them."
+  (interactive)
+  (package-initialize)
+  (message "")
+  (message "MX-Emacs package status")
+  (message "-----------------------")
+  (dolist (package mx-packages-selected)
+    (let* ((descriptions (cdr (assq package package-alist)))
+           (installed (and descriptions
+                           (mx-packages--newest-desc descriptions))))
+      (if installed
+          (message "  [INSTALLED] %-20s %s"
+                   package
+                   (package-version-join
+                    (package-desc-version installed)))
+        (message "  [MISSING]   %s" package))))
+  (message "")
+  (message "Configured packages: %d; installed: %d; missing: %d"
+           (length mx-packages-selected)
+           (length (seq-filter
+                    (lambda (package)
+                      (package-installed-p package))
+                    mx-packages-selected))
+           (length (mx-packages-missing))))
+
 (defun mx-packages--report-upgrades (upgrades)
   "Display UPGRADES with installed and candidate versions."
   (message "")
