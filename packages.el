@@ -138,21 +138,31 @@ Signal an error after reporting all failures so batch callers exit non-zero."
            nil 'nomessage)))
   (message "[OK] MX-Emacs initialization completed."))
 
+(defun mx-packages--newest-desc (descriptions)
+  "Return the highest-version package description in DESCRIPTIONS."
+  (car
+   (sort (copy-sequence descriptions)
+         (lambda (left right)
+           (version-list-<
+            (package-desc-version right)
+            (package-desc-version left))))))
+
 (defun mx-packages--available-upgrades ()
   "Return installed packages with newer versions in package archives.
 Each entry is (PACKAGE INSTALLED-DESC CANDIDATE-DESC)."
   (let (upgrades)
     (dolist (entry package-alist)
       (let* ((package (car entry))
-             (installed (car (cdr entry)))
-             (candidate (cdr (assq package package-archive-contents))))
+             (installed (mx-packages--newest-desc (cdr entry)))
+             (candidates (cdr (assq package package-archive-contents)))
+             (candidate (and candidates
+                             (mx-packages--newest-desc candidates))))
         (when (and installed candidate
                    (version-list-<
                     (package-desc-version installed)
                     (package-desc-version candidate)))
           (push (list package installed candidate) upgrades))))
     (nreverse upgrades)))
-
 (defun mx-packages--report-upgrades (upgrades)
   "Display UPGRADES with installed and candidate versions."
   (message "")
